@@ -21,7 +21,14 @@ const createTareas = asyncHandler(async(req,res)=> {
 })
 
 const updateTareas = asyncHandler(async(req,res)=> {
-    res.status(200).json({"mensaje":"getTareas"})
+    const tarea = await Tarea.findById(req.params.id)
+    if (!tarea) {
+        res.status(404)
+        throw new Error('Tarea no existe')
+    }
+
+    const tareaUpdated = await Tarea.findByIdAndUpdate(req.params.id, req.body, {new:true})
+    res.status(200).json(tareaUpdated)
 })
 
 const deleteTareas = asyncHandler(async(req,res)=> {
