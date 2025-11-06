@@ -3,9 +3,26 @@ const jwt = require ('jsonwebtoken')
 const asyncHandler = require ('express-async-handler')
 const User = require('../models/usersModel')
 
-const login = (req, res) => {
-    res.status(200).json({message: 'login'})
-}
+const login = asyncHandler( async(req, res) => {
+    
+    //desestructuramos el body que pasamos en el request
+    const {email, password} = req.body
+
+    //verificar si el usuario que se intenta loguear existe
+    const user = await User.findOne({email})
+
+    if (user && (await bcrypt.compare(password, user.password))) {
+        res.status(200).json({
+            _id: user.id,
+            nombre: user.nombre,
+            email: user.email,
+            token: generarToken(user.id)
+        })
+    } else {
+        res.status(401)
+        throw new Error ('Credenciales Incorrectas')
+    }
+})
 
 const register = asyncHandler( async(req, res) => {
     const {nombre, email, password} = req.body
@@ -45,13 +62,16 @@ const register = asyncHandler( async(req, res) => {
             throw new Error('No se pudieron guardar los datos')
         }
     }
-
-
-
 })
 
 const data = (req, res) => {
-    res.status(200).json({message: 'data'})
+    res.status(200).json(req.user)
+}
+
+const generarToken = (id) => {
+    return jwt.sign({id}, process.env.JWT_SECRET, {
+        expiresIn: '30d'
+    })
 }
 
 module.exports = {
